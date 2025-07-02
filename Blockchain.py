@@ -11,7 +11,7 @@ class Blockchain:
         self.add_genesis_block()
 
     def add_genesis_block(self):
-        genesis_transaction = LegacyTransaction("genesis", "Viktor", "0x0", "0x0", "0x0", hex(10**18), "0x0")
+        genesis_transaction = LegacyTransaction("genesis", "0x53f71e9815eebb203a35e07c2c5933a853dcad55", "0x0", "0x0", "0x0", hex(10**18), "0x0")
         block = Block(0, time.time(), [genesis_transaction], difficulty=self.difficulty)
         block.hash = block.calculate_hash()
         self.apply_transactions([genesis_transaction])

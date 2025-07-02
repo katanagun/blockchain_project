@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Python Chain + MetaMask</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
+</head>
+<body>
+  <h2>Кошелек: <span id="wallet"></span></h2>
+  <h3>Баланс: <span id="balance">—</span></h3>
+
+  <input id="to" placeholder="Кому (адрес)" />
+  <input id="amount" placeholder="Сколько (в wei)" />
+  <button onclick="send()">Отправить</button>
+
+  <pre id="log"></pre>
+
+  <script>
+    let web3 = new Web3(window.ethereum);
+    let user;
+
+    async function connect() {
+      const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+      user = accounts[0];
+      document.getElementById("wallet").textContent = user;
+      getBalance();
+    }
+
+    async function getBalance() {
+      const res = await fetch("http://localhost:5000/balance/" + user);
+      const data = await res.json();
+      document.getElementById("balance").textContent = data.balance;
+    }
+
+    async function send() {
+      const to = document.getElementById("to").value;
+      const value = parseInt(document.getElementById("amount").value);
+      const nonce = await web3.eth.getTransactionCount(user);
+      const gasPrice = await web3.eth.getGasPrice();
+      const gasLimit = 21000;
+
+      const tx = {
+        from: user,
+        to: to,
+        nonce: "0x" + nonce.toString(16),
+        gasPrice: "0x" + parseInt(gasPrice).toString(16),
+        gasLimit: "0x" + gasLimit.toString(16),
+        value: "0x" + value.toString(16),
+        data: "0x0"
+      };
+
+      const response = await fetch("http://localhost:5000/submit_tx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tx)
+      });
+
+      const result = await response.json();
+      document.getElementById("log").textContent = JSON.stringify(result, null, 2);
+      getBalance();
+    }
+
+    connect();
+  </script>
+</body>
+</html>
