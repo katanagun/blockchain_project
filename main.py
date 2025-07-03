@@ -6,13 +6,9 @@ def main():
     my_blockchain = Blockchain()
 
     # создание транзакций и добавление их в блоки
-    transaction1 = LegacyTransaction("Viktor", "Alex", "0x0", "0x3b9aca00", "0x5208", hex(1_000_000_000), "0x0")
-    transaction2 = LegacyTransaction("Viktor", "Alex", "0x1", "0x3b9aca00", "0x5208", hex(1_000_000_000), "0x0")
-    transaction3 = LegacyTransaction("Viktor", "Alex", "0x2", "0x3b9aca00", "0x5208", hex(1_000_000_000), "0x0")
+    transaction1 = LegacyTransaction("0x53f71e9815eebB203a35E07C2c5933A853DcAd55", "Alex", "0x0", "0x3b9aca00", "0x5208", hex(1_000_000_000), "0x0")
 
-    transaction_block1 = [transaction1, transaction2, transaction3]
-
-    my_blockchain.add_block(transaction_block1)
+    my_blockchain.add_block([transaction1])
 
     # выводим всю цепь блоков
     for block in my_blockchain.chain:
