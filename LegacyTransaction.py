@@ -1,3 +1,7 @@
+from web3 import Web3
+import rlp
+from eth_account._utils.legacy_transactions import Transaction as EthLegacyTransaction
+
 class LegacyTransaction:
     def __init__(self, from_address, to, nonce, gas_price, gas_limit, value, data, v, r, s):
         self.from_address = from_address
@@ -11,8 +15,28 @@ class LegacyTransaction:
         self.r = self._hex_to_int(r)
         self.s = self._hex_to_int(s)
 
+        self.tx_hash = None
+
+    def set_hash(self):
+        # Создаём RLP-транзакцию в формате legacy
+        rlp_tx = EthLegacyTransaction(
+            nonce=self.nonce,
+            gasPrice=self.gas_price,
+            gas=self.gas_limit,
+            to=bytes.fromhex(self.to[2:]) if self.to and self.to != "0x0000000000000000000000000000000000000000" else b"",
+            value=self.value,
+            data=bytes.fromhex(self.data[2:]) if self.data.startswith("0x") else self.data,
+            v=self.v,
+            r=self.r,
+            s=self.s
+        )
+        self.tx_hash = Web3.keccak(rlp.encode(rlp_tx)).hex()
+
     def __str__(self):
-        return f"{self.from_address}->{self.to}: value={self.value}, nonce={hex(self.nonce)}"
+        return self.tx_hash if self.tx_hash else f"{self.from_address}->{self.to}: value={self.value}, nonce={hex(self.nonce)}"
+
+    def __repr__(self):
+        return f"<LegacyTransaction from={self.from_address} to={self.to} value={self.value} nonce={self.nonce} hash={self.tx_hash}>"
 
     @staticmethod
     def _hex_to_int(val):

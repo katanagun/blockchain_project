@@ -28,8 +28,10 @@ class Blockchain:
 
         if self.validate_transactions(transactions):
             self.chain.append(block)
+            return True
         else:
             print("Transactions failed verification.")
+            return False
 
     def validate_transactions(self, transactions):
         for tx in transactions:
@@ -48,58 +50,59 @@ class Blockchain:
             self.apply_transactions([tx])
         return True
 
-    def verify_signature(self, tx):
-        try:
-            if not tx.v or not tx.r or not tx.s:
-                print("Подпись отсутствует")
-                return False
-
-            v = int(tx.v, 16) if isinstance(tx.v, str) else tx.v
-            r = int(tx.r, 16) if isinstance(tx.r, str) else tx.r
-            s = int(tx.s, 16) if isinstance(tx.s, str) else tx.s
-
-            CHAIN_ID = 1111
-
-            to_field = tx.to
-            if isinstance(to_field, bytes):
-                to_field = "0x" + to_field.hex()
-            elif isinstance(to_field, str):
-                to_field = to_field.lower()
-                if not to_field.startswith("0x"):
-                    to_field = "0x" + to_field
-            else:
-                to_field = None
-
-            # Собираем словарь неподписанной транзакции
-            unsigned_dict = {
-                "nonce": tx.nonce,
-                "gasPrice": tx.gas_price,
-                "gas": tx.gas_limit,
-                "to": tx.to,
-                "value": tx.value,
-                "data": decode_hex(tx.data),
-                "chainId": CHAIN_ID,
-            }
-
-            unsigned_tx = serializable_unsigned_transaction_from_dict(unsigned_dict)
-            message_hash = unsigned_tx.hash()
-
-            # Вычисляем "v"
-            v_standard = v - (CHAIN_ID * 2 + 35)
-            if v_standard not in (0, 1):
-                print("Неверный recovery id:", v_standard)
-                return False
-
-            # Собираем подпись и восстанавливаем публичный ключ
-            signature = r.to_bytes(32, "big") + s.to_bytes(32, "big") + bytes([v_standard])
-            public_key = keys.ecdsa_recover(message_hash, signature)
-            recovered_address = public_key.to_checksum_address()
-
-            return recovered_address.lower() == tx.from_address.lower()
-
-        except Exception as e:
-            print("Ошибка подписи:", e)
-            return False
+    # этот метод нигде не используется
+    # def verify_signature(self, tx):
+    #     try:
+    #         if not tx.v or not tx.r or not tx.s:
+    #             print("Подпись отсутствует")
+    #             return False
+    #
+    #         v = int(tx.v, 16) if isinstance(tx.v, str) else tx.v
+    #         r = int(tx.r, 16) if isinstance(tx.r, str) else tx.r
+    #         s = int(tx.s, 16) if isinstance(tx.s, str) else tx.s
+    #
+    #         CHAIN_ID = 1111
+    #
+    #         to_field = tx.to
+    #         if isinstance(to_field, bytes):
+    #             to_field = "0x" + to_field.hex()
+    #         elif isinstance(to_field, str):
+    #             to_field = to_field.lower()
+    #             if not to_field.startswith("0x"):
+    #                 to_field = "0x" + to_field
+    #         else:
+    #             to_field = None
+    #
+    #         # Собираем словарь неподписанной транзакции
+    #         unsigned_dict = {
+    #             "nonce": tx.nonce,
+    #             "gasPrice": tx.gas_price,
+    #             "gas": tx.gas_limit,
+    #             "to": tx.to,
+    #             "value": tx.value,
+    #             "data": decode_hex(tx.data),
+    #             "chainId": CHAIN_ID,
+    #         }
+    #
+    #         unsigned_tx = serializable_unsigned_transaction_from_dict(unsigned_dict)
+    #         message_hash = unsigned_tx.hash()
+    #
+    #         # Вычисляем "v"
+    #         v_standard = v - (CHAIN_ID * 2 + 35)
+    #         if v_standard not in (0, 1):
+    #             print("Неверный recovery id:", v_standard)
+    #             return False
+    #
+    #         # Собираем подпись и восстанавливаем публичный ключ
+    #         signature = r.to_bytes(32, "big") + s.to_bytes(32, "big") + bytes([v_standard])
+    #         public_key = keys.ecdsa_recover(message_hash, signature)
+    #         recovered_address = public_key.to_checksum_address()
+    #
+    #         return recovered_address.lower() == tx.from_address.lower()
+    #
+    #     except Exception as e:
+    #         print("Ошибка подписи:", e)
+    #         return False
 
     def apply_transactions(self, transactions):
         for tx in transactions:
