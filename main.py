@@ -1,6 +1,9 @@
-# from Blockchain import Blockchain
-# from LegacyTransaction import LegacyTransaction
-#
+from Blockchain import Blockchain
+from LegacyTransaction import LegacyTransaction
+from Interpreter import Interpreter
+
+blockchain = Blockchain()
+
 # def main():
 #     # создание объекта blockchain (вместе с созданием объекта создается первый блок и пополняется баланс получателя)
 #     my_blockchain = Blockchain()
@@ -16,6 +19,10 @@
 #         for transaction in block.transactions:
 #             print(f"{transaction}")
 #         print("---")
-#
-# if __name__ == "__main__":
-#      main()
+
+def test_interpreter():
+    interpreter = Interpreter(blockchain)
+    interpreter.execute()
+
+if __name__ == "__main__":
+     test_interpreter()

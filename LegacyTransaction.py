@@ -14,7 +14,6 @@ class LegacyTransaction:
         self.v = self._hex_to_int(v)
         self.r = self._hex_to_int(r)
         self.s = self._hex_to_int(s)
-
         self.tx_hash = None
 
     def set_hash(self):

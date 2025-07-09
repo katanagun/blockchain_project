@@ -117,6 +117,76 @@ def rpc():
                 "result": block_response
             })
 
+        elif method == "eth_getBlockByHash":
+            if len(params) < 1:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "id": rpc_id,
+                    "result": None
+                })
+
+            requested_hash = params[0].replace("0x", "").lower()
+            full_tx = params[1] if len(params) > 1 else False
+            block_obj = None
+
+            for block in blockchain.chain:
+                if block.hash.lower() == requested_hash:
+                    block_obj = block
+                    break
+
+            if not block_obj:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "id": rpc_id,
+                    "result": None
+                })
+
+            if full_tx:
+                transactions = []
+                for tx in block_obj.transactions:
+                    transactions.append({
+                        "from": tx.from_address,
+                        "to": tx.to,
+                        "value": hex(tx.value),
+                        "nonce": hex(tx.nonce),
+                        "gas": hex(tx.gas_limit),
+                        "gasPrice": hex(tx.gas_price),
+                        "input": tx.data,
+                        "v": hex(int(tx.v, 16) if isinstance(tx.v, str) else tx.v) if tx.v else "0x0",
+                        "r": hex(int(tx.r, 16) if isinstance(tx.r, str) else tx.r) if tx.r else "0x0",
+                        "s": hex(int(tx.s, 16) if isinstance(tx.s, str) else tx.s) if tx.s else "0x0",
+                    })
+            else:
+                transactions = ["0x" + tx.tx_hash for tx in block_obj.transactions]
+
+            block_response = {
+                "number": hex(block_obj.index),
+                "hash": "0x" + block_obj.hash,
+                "parentHash": "0x" + (block_obj.previous_hash or "0" * 64),
+                "nonce": hex(block_obj.nonce),
+                "sha3Uncles": "0x" + "0" * 64,
+                "logsBloom": "0x" + "0" * 512,
+                "transactionsRoot": "0x" + "0" * 64,
+                "stateRoot": "0x" + "0" * 64,
+                "receiptsRoot": "0x" + "0" * 64,
+                "miner": "0x0000000000000000000000000000000000000000",
+                "difficulty": "0x1",
+                "totalDifficulty": "0x1",
+                "extraData": "0x",
+                "size": hex(1000),
+                "gasLimit": hex(30000000),
+                "gasUsed": hex(0),
+                "timestamp": hex(int(block_obj.timestamp)),
+                "transactions": transactions,
+                "uncles": []
+            }
+
+            return jsonify({
+                "jsonrpc": "2.0",
+                "id": rpc_id,
+                "result": block_response
+            })
+
         elif method == "eth_getBalance":
             if len(params) < 1:
                 raise ValueError("Missing address")
@@ -239,8 +309,8 @@ def rpc():
                                 "transactionIndex": "0x0",
                                 "blockHash": "0x" + block.hash,
                                 "blockNumber": hex(idx),
-                                "from": tx.from_address,
-                                "to": tx.to,
+                                "from": tx.from_address.lower(),
+                                "to": tx.to.lower(),
                                 "cumulativeGasUsed": hex(tx.gas_limit),
                                 "gasUsed": hex(tx.gas_limit),
                                 "effectiveGasPrice": hex(tx.gas_price),
