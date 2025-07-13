@@ -49,7 +49,7 @@ class Interpreter:
             print("Ошибка: транзакция не прошла проверку.")
 
         # Вывод балансов
-        print("\n📊 Балансы адресов:")
+        print("\nБалансы адресов:")
         all_addresses = [self.sender] + recipients
         for addr in all_addresses:
             balance = self.blockchain.balances.get(addr.lower(), 0)
