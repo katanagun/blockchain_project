@@ -1,4 +1,6 @@
 import web3
+import requests
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import rlp
@@ -9,6 +11,14 @@ from eth_account._utils.legacy_transactions import (
 
 from Blockchain import Blockchain
 from LegacyTransaction import LegacyTransaction
+from Block import Block
+
+
+PEERS = os.getenv("PEERS", "").split(",")
+NODE_NAME = os.getenv("NODE_NAME", "unnamed")
+
+print(f"Стартует нода: {NODE_NAME}")
+print(f"Подключенные PEERS: {PEERS}")
 
 web3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
 blockchain = Blockchain()
@@ -17,6 +27,36 @@ app = Flask(__name__)
 CORS(app)
 
 CHAIN_ID = 1111
+
+def broadcast_block(block):
+    for peer in PEERS:
+        try:
+            requests.post(f"{peer}/receive-block", json=block.serialize())
+        except Exception as e:
+            print(f"Не удалось отправить блок на {peer}: {e}")
+
+@app.route("/receive-block", methods=["POST"])
+def receive_block():
+    try:
+        block_data = request.get_json(force=True)
+        block = Block.deserialize(block_data)
+
+        # Проверка: не дублируй, если блок уже есть
+        if any(b.hash == block.hash for b in blockchain.chain):
+            return "Блок уже есть", 200
+
+        success = blockchain.append_block(block)
+        if success:
+            return "Блок принят", 200
+        else:
+            return "Ошибка верификации", 400
+    except Exception as e:
+        return f"Ошибка приема блока: {str(e)}", 500
+
+@app.route("/chain")
+def chain():
+    return jsonify([b.serialize() for b in blockchain.chain])
+
 
 @app.route("/", methods=["POST"])
 def rpc():
@@ -266,6 +306,7 @@ def rpc():
                 # добавление в блокчейн
                 success = blockchain.add_block([tx])
                 if success:
+                    broadcast_block(blockchain.chain[-1])
                     return jsonify({
                         "jsonrpc": "2.0",
                         "id": rpc_id,
@@ -376,4 +417,4 @@ def rpc():
         }), 500
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8545)
+    app.run(host="0.0.0.0", port=8545)

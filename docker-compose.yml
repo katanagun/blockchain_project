@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  node1:
+    build: .
+    ports:
+      - "8545:8545"
+    environment:
+      - NODE_NAME=node1
+      - PEERS=http://node2:8545,http://node3:8545
+
+  node2:
+    build: .
+    ports:
+      - "8546:8545"
+    environment:
+      - NODE_NAME=node2
+      - PEERS=http://node1:8545,http://node3:8545
+
+  node3:
+    build: .
+    ports:
+      - "8547:8545"
+    environment:
+      - NODE_NAME=node3
+      - PEERS=http://node1:8545,http://node2:8545

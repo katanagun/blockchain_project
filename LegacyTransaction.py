@@ -17,7 +17,7 @@ class LegacyTransaction:
         self.tx_hash = None
 
     def set_hash(self):
-        # Создаём RLP-транзакцию в формате legacy
+        # создание RLP-транзакции в формате legacy
         rlp_tx = EthLegacyTransaction(
             nonce=self.nonce,
             gasPrice=self.gas_price,
